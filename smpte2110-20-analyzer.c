@@ -22,24 +22,9 @@
 #endif
 
 #include "copyright.h"
-#include "smpte2110_20.h"
+#include "smpte2110_20_packet.h"
 #include "rtp.h"
 #include "klbitstream_readwriter.h"
-#include "xorg-list.h"
-
-/* One RTP packet, potentially containing multiple
- * frame lines or fragments of.
- */
-struct smpte2110_20_frame_element_s
-{
-	struct xorg_list list;
-};
-
-struct smpte2110_20_frame_assembly_s
-{
-	/* Collection of RTP pieces that make up a frame */
-	struct xorg_list listElements;
-};
 
 struct tool_ctx_s
 {
@@ -135,10 +120,10 @@ static void pcap_process_packet(struct tool_ctx_s *ctx, const struct pcap_pkthdr
 	printf("            sequence number: %d\n", ntohs(rtphdr->seq));
 	printf("            timestamp: %u / %08x\n", ntohl(rtphdr->ts), ntohl(rtphdr->ts));
 
-	struct smpte2110_20_s *rfchdr;
-	smpte2110_20_parse(&rfchdr, ctx->bs, (const unsigned char *)rtpdata, rtpdatalen);
-	smpte2110_20_dump(rfchdr);
-	smpte2110_20_free(rfchdr);
+	struct smpte2110_20_packet_s *rfchdr;
+	smpte2110_20_packet_parse(&rfchdr, ctx->bs, (const unsigned char *)rtpdata, rtpdatalen);
+	smpte2110_20_packet_dump(rfchdr);
+	smpte2110_20_packet_free(rfchdr);
 
 	if (ctx->verbose > 1) {
 		printf("                rtpdata: ");

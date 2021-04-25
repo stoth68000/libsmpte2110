@@ -1,4 +1,7 @@
 
+#ifndef SMPTE2110_RTP_H
+#define SMPTE2110_RTP_H
+
 #include <inttypes.h> 
 
 //
@@ -113,3 +116,4 @@ static __inline__ void rtp_analyzer_report(struct rtp_hdr_analyzer_s *ctx)
 	printf("\tIllegal Timestamp Stall events = %" PRIi64 "\n", ctx->illegalTimestampStallEvents);
 }
 
+#endif /* SMPTE2110_RTP_H */

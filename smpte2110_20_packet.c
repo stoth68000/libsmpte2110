@@ -1,5 +1,9 @@
 /* Copyright Kernel Labs Inc 2021. All Rights Reserved */
 
+/* Framework to parse 2110-20 Video packets and do interesting things with them,
+ * such as converting them to/from actual video frames.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,19 +11,17 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#include "smpte2110_20.h"
+#include "smpte2110_20_packet.h"
 
 #include "klbitstream_readwriter.h"
 
-#define SANITIZE(n) ((n) & 0xff)
-
-struct smpte2110_20_s *smpte2110_20_alloc()
+struct smpte2110_20_packet_s *smpte2110_20_packet_alloc()
 {
-	struct smpte2110_20_s *p = malloc(sizeof(*p));
+	struct smpte2110_20_packet_s *p = malloc(sizeof(*p));
 	return p;
 }
 
-void smpte2110_20_free(struct smpte2110_20_s *p)
+void smpte2110_20_packet_free(struct smpte2110_20_packet_s *p)
 {
 	if (p) {
 		if (p->array) {
@@ -29,10 +31,9 @@ void smpte2110_20_free(struct smpte2110_20_s *p)
 	}
 }
 
-int smpte2110_20_parse(struct smpte2110_20_s **p, struct klbs_context_s *bs, const unsigned char *rtpdata, int rtpdatalen)
+int smpte2110_20_packet_parse(struct smpte2110_20_packet_s **p, struct klbs_context_s *bs, const unsigned char *rtpdata, int rtpdatalen)
 {
-printf("rtplen %d bytes\n", rtpdatalen);
-	struct smpte2110_20_s *rfchdr = smpte2110_20_alloc();
+	struct smpte2110_20_packet_s *rfchdr = smpte2110_20_packet_alloc();
 	*p = rfchdr;
 
 	klbs_read_set_buffer(bs, (unsigned char *)rtpdata, rtpdatalen);
@@ -40,11 +41,11 @@ printf("rtplen %d bytes\n", rtpdatalen);
 	rfchdr->ExtendedSequenceNumber = klbs_read_bits(bs, 16);
 	rfchdr->Line_Count = 12;
 
-	rfchdr->array = malloc(rfchdr->Line_Count * sizeof(struct smpte2110_20_line_s));
+	rfchdr->array = malloc(rfchdr->Line_Count * sizeof(struct smpte2110_20_packet_line_s));
 
 	int j = 0;
 	while (1) {
-		struct smpte2110_20_line_s *l = &rfchdr->array[j];
+		struct smpte2110_20_packet_line_s *l = &rfchdr->array[j];
 		l->SRD_Length            = klbs_read_bits(bs, 16);
 		if (l->SRD_Length == 0)
 			break;
@@ -69,13 +70,13 @@ printf("rtplen %d bytes\n", rtpdatalen);
 	return 0;
 }
 
-void smpte2110_20_dump(struct smpte2110_20_s *rfchdr)
+void smpte2110_20_packet_dump(struct smpte2110_20_packet_s *rfchdr)
 {
 	printf("extended SN: %04x\n", rfchdr->ExtendedSequenceNumber);
 	printf("Line_Count : 0x%02x\n", rfchdr->Line_Count);
 
 	for (int j = 0; j < rfchdr->Line_Count; j++) {
-		struct smpte2110_20_line_s *l = &rfchdr->array[j];
+		struct smpte2110_20_packet_line_s *l = &rfchdr->array[j];
 		printf("SRD_Length     : 0x%04x  ", l->SRD_Length);
 		printf("F              : %d  ", l->F);
 		printf("SRD_Line_No    : 0x%04x  ", l->SRD_Row_Number);
