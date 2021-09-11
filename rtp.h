@@ -37,6 +37,7 @@ struct rtp_hdr_analyzer_s
 {
 	struct rtp_hdr last;
 	int64_t totalPackets;
+	int64_t totalFrames;
 	int64_t discontinuityEvents;
 	int64_t illegalPayloadTypeEvents;
 	int64_t illegalTimestampMovementEvents;
@@ -103,6 +104,10 @@ static __inline__ int rtp_hdr_write(struct rtp_hdr_analyzer_s *ctx, const struct
 	if (rtp_hdr_is_payload_type_valid(src) == 0)
 		ctx->illegalPayloadTypeEvents++;
 
+	/* Count new frames as they arrive. */
+	if (src->m)
+		ctx->totalFrames++;
+
 	return 0;
 }
 
@@ -110,6 +115,7 @@ static __inline__ void rtp_analyzer_report(struct rtp_hdr_analyzer_s *ctx)
 {
 	printf("RTP Analyzer Report:\n");
 	printf("\tTotal packets = %" PRIi64 "\n", ctx->totalPackets);
+	printf("\tTotal frames = %" PRIi64 "\n", ctx->totalFrames);
 	printf("\tDiscontinuity events = %" PRIi64 "\n", ctx->discontinuityEvents);
 	printf("\tIllegal Payload Type events = %" PRIi64 "\n", ctx->illegalPayloadTypeEvents);
 	printf("\tIllegal Timestamp Movement events = %" PRIi64 "\n", ctx->illegalTimestampMovementEvents);
